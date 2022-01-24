@@ -21,3 +21,31 @@ https://docs.docker.com/engine/reference/commandline/login/#credentials-store
 
 Login Succeeded
 ```
+
+## Example Drone stage
+
+```yaml
+kind: pipeline
+type: docker
+name: pipe1
+steps:
+- name: pull_my_private_image_from_ecr
+    image: harryuan65/drone-ecr-puller # well, this is public on my repo
+    environment:
+      AWS_ACCESS_KEY:
+        from_secret: aws_access_key
+      AWS_SECRET_KEY:
+        from_secret: aws_secret_key
+      AWS_ECR_REGISTRY:
+        from_secret: aws_ecr_registry
+      AWS_REGION:
+        from_secret: aws_region
+    volumes:
+      - name: docker
+        path: /var/run/docker.sock
+    commands:
+      - aws configure set aws_access_key_id $AWS_ACCESS_KEY --profile default
+      - aws configure set aws_secret_access_key $AWS_SECRET_KEY --profile default
+      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ECR_REGISTRY
+      - docker pull 41666888123123.dkr.ecr.MY_REGION.amazonaws.com/MY_PRECIOUS_PRIVATE_IMAGE:latest
+```
